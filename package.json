@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "prepare": "husky"
   },
   "keywords": ["starknet", "websocket", "rpc"],
   "author": "",
@@ -23,8 +24,15 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md}": "prettier --write",
+    "*.{ts}": "eslint --cache --ext .ts"
   },
   "engines": {
     "node": ">=18.0.0"
