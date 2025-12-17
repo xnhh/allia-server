@@ -1,0 +1,66 @@
+// Prisma Schema for Allia Server
+// This file defines the database schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 合约类定义表
+model Contract {
+  id                  String   @id @default(uuid()) @db.Uuid
+  name                String   @db.VarChar(255)
+  description         String?  @db.Text
+  network             String   @default("sepolia") @db.VarChar(50)
+  sierra_json         Json?
+  casm_json           Json?
+  class_hash          String?  @db.VarChar(66)
+  compiled_class_hash String?  @db.VarChar(66)
+  status              String   @default("draft") @db.VarChar(50)
+  owner_address       String?  @db.VarChar(66)
+  declare_tx_hash     String?  @db.VarChar(66)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  // 关联的合约实例
+  instances           ContractInstance[]
+
+  @@index([status])
+  @@index([network])
+  @@index([owner_address])
+  @@index([class_hash])
+  @@map("contracts")
+}
+
+// 合约实例表
+model ContractInstance {
+  id                  String   @id @default(uuid()) @db.Uuid
+  contract_id         String   @db.Uuid
+  instance_address    String   @db.VarChar(66)
+  constructor_calldata Json?
+  deploy_tx_hash      String?  @db.VarChar(66)
+  deployer_address    String?  @db.VarChar(66)
+  salt                String?  @db.VarChar(66)
+  status              String   @default("pending") @db.VarChar(50)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  // 关联的合约
+  contract            Contract  @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+
+  @@index([contract_id])
+  @@index([instance_address])
+  @@index([deployer_address])
+  @@map("contract_instances")
+}
+
+// 注意：由于数据库使用 VARCHAR 类型存储状态，这里使用 String 而不是枚举
+// 如果需要类型安全，可以在应用层使用类型定义
+// 
+// 合约状态类型：draft | declared | deployed
+// 实例状态类型：pending | deployed | failed
+

@@ -8,18 +8,30 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push",
+    "db:init": "node scripts/init-db.js || bash scripts/init-db.sh || pwsh scripts/init-db.ps1"
   },
-  "keywords": ["starknet", "websocket", "rpc"],
+  "keywords": [
+    "starknet",
+    "websocket",
+    "rpc"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "starknet": "^8.5.2",
     "ws": "^8.18.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.1",
+    "@prisma/client": "^5.20.0"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.11.10",
     "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
@@ -27,15 +39,15 @@
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
+    "prisma": "^5.20.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   },
   "lint-staged": {
     "*.{js,ts,json,md}": "prettier --write",
-    "*.{ts}": "eslint --cache --ext .ts"
+    "*.ts": "eslint --cache --ext .ts"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
-
