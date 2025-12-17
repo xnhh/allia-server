@@ -1,6 +1,7 @@
 import dotenv from "dotenv"
 import { IChain, BaseChain } from "./base"
 import { StarknetChain } from "./starknet"
+import { log } from "../utils/logger"
 
 // Load environment variables before creating chain instances
 dotenv.config()
@@ -31,12 +32,10 @@ export class ChainManager {
    */
   registerChain(chain: IChain): void {
     if (this.chains.has(chain.chainId)) {
-      console.warn(
-        `Chain "${chain.chainId}" is already registered. Overwriting...`
-      )
+      log.warn(`Chain "${chain.chainId}" is already registered. Overwriting...`)
     }
     this.chains.set(chain.chainId, chain)
-    console.log(`[ChainManager] Registered chain: ${chain.name} (${chain.chainId})`)
+    log.tagged("ChainManager", `Registered chain: ${chain.name} (${chain.chainId})`)
   }
 
   /**
@@ -102,4 +101,3 @@ export class ChainManager {
 
 // Singleton instance
 export const chainManager = new ChainManager()
-

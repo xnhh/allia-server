@@ -2,23 +2,26 @@ import dotenv from "dotenv"
 import { WebSocketServer } from "./server/websocket"
 import { RpcService } from "./services/rpc"
 import { prisma } from "./db/prisma"
+import { log } from "./utils/logger"
 
 dotenv.config()
 
 const WS_PORT = parseInt(process.env.WS_PORT || "8501", 10)
 
 async function main() {
-  console.log("Starting Allia Server...")
+  // 显示启动横幅
+  log.banner("🚀 Allia Server", [
+    "WebSocket RPC Server for Starknet",
+    `Version: ${process.env.npm_package_version || "1.0.0"}`,
+  ])
 
   // Test database connection
   try {
     await prisma.$connect()
-    console.log("[DB] Connected to PostgreSQL via Prisma")
+    log.success("Connected to PostgreSQL via Prisma")
   } catch (error) {
-    console.warn(
-      "[Warning] Database connection failed. Contract management features will not work."
-    )
-    console.error(error)
+    log.warn("Database connection failed. Contract management features will not work.")
+    log.error(String(error))
   }
 
   // Initialize RPC service
@@ -27,26 +30,30 @@ async function main() {
   // Initialize WebSocket server
   const wsServer = new WebSocketServer(WS_PORT, rpcService)
 
-  console.log(`WebSocket server listening on ws://localhost:${WS_PORT}`)
-  console.log("Allia Server is ready!")
+  log.separator()
+  log.success(`WebSocket server listening on ws://localhost:${WS_PORT}`)
+  log.info("Allia Server is ready!")
+  log.separator()
 
   // Graceful shutdown
   process.on("SIGINT", async () => {
-    console.log("\nShutting down gracefully...")
+    log.info("\nShutting down gracefully...")
     wsServer.close()
     await prisma.$disconnect()
+    log.success("Server stopped")
     process.exit(0)
   })
 
   process.on("SIGTERM", async () => {
-    console.log("\nShutting down gracefully...")
+    log.info("\nShutting down gracefully...")
     wsServer.close()
     await prisma.$disconnect()
+    log.success("Server stopped")
     process.exit(0)
   })
 }
 
 main().catch((error) => {
-  console.error("Failed to start server:", error)
+  log.error("Failed to start server:", error)
   process.exit(1)
 })

@@ -1,5 +1,6 @@
 import { RpcProvider, constants } from "starknet"
 import { BaseChain } from "./base"
+import { log } from "../utils/logger"
 
 export interface StarknetConfig {
   mainnetRpcUrl?: string
@@ -12,7 +13,8 @@ export class StarknetChain extends BaseChain {
   readonly supportedNetworks = ["mainnet", "sepolia"]
 
   // ETH token contract address (same for mainnet and sepolia)
-  private static readonly ETH_TOKEN_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+  private static readonly ETH_TOKEN_ADDRESS =
+    "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
 
   private mainnetProvider: RpcProvider
   private sepoliaProvider: RpcProvider
@@ -20,13 +22,9 @@ export class StarknetChain extends BaseChain {
   constructor(config?: StarknetConfig) {
     super()
 
-    const mainnetRpcUrl =
-      config?.mainnetRpcUrl ||
-      process.env.STARKNET_MAINNET_RPC_URL
+    const mainnetRpcUrl = config?.mainnetRpcUrl || process.env.STARKNET_MAINNET_RPC_URL
 
-    const sepoliaRpcUrl =
-      config?.sepoliaRpcUrl ||
-      process.env.STARKNET_SEPOLIA_RPC_URL
+    const sepoliaRpcUrl = config?.sepoliaRpcUrl || process.env.STARKNET_SEPOLIA_RPC_URL
 
     this.mainnetProvider = new RpcProvider({
       nodeUrl: mainnetRpcUrl,
@@ -38,9 +36,9 @@ export class StarknetChain extends BaseChain {
       chainId: constants.StarknetChainId.SN_SEPOLIA,
     })
 
-    console.log(`[StarknetChain] Initialized`)
-    console.log(`[StarknetChain] Mainnet RPC: ${mainnetRpcUrl}`)
-    console.log(`[StarknetChain] Sepolia RPC: ${sepoliaRpcUrl}`)
+    log.tagged("StarknetChain", "Initialized")
+    log.debug(`Mainnet RPC: ${mainnetRpcUrl}`)
+    log.debug(`Sepolia RPC: ${sepoliaRpcUrl}`)
   }
 
   private getProvider(network?: string): RpcProvider {
@@ -81,7 +79,7 @@ export class StarknetChain extends BaseChain {
     // Use provided contractAddress or default to ETH token contract
     // In Starknet, account balances are stored in token contracts
     const tokenContractAddress = params.contractAddress || StarknetChain.ETH_TOKEN_ADDRESS
-    
+
     const result = await this.callContract({
       contractAddress: tokenContractAddress,
       entrypoint: "balanceOf",
@@ -122,10 +120,7 @@ export class StarknetChain extends BaseChain {
     }
   }
 
-  async getTransaction(params: {
-    transactionHash: string
-    network?: string
-  }): Promise<any> {
+  async getTransaction(params: { transactionHash: string; network?: string }): Promise<any> {
     const provider = this.getProvider(params.network)
 
     return await provider.getTransaction(params.transactionHash)
@@ -134,10 +129,7 @@ export class StarknetChain extends BaseChain {
   /**
    * Starknet-specific: Get Starknet ID name
    */
-  async getStarkName(params: {
-    address: string
-    network?: string
-  }): Promise<string | null> {
+  async getStarkName(params: { address: string; network?: string }): Promise<string | null> {
     // TODO: Implement using Starknet ID contracts
     return null
   }
@@ -145,10 +137,7 @@ export class StarknetChain extends BaseChain {
   /**
    * Starknet-specific: Get Starknet profile
    */
-  async getStarkProfile(params: {
-    address: string
-    network?: string
-  }): Promise<any | null> {
+  async getStarkProfile(params: { address: string; network?: string }): Promise<any | null> {
     // TODO: Implement using Starknet ID contracts
     return null
   }
@@ -158,4 +147,3 @@ export class StarknetChain extends BaseChain {
     return ethValue.toFixed(6)
   }
 }
-

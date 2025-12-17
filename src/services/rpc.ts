@@ -1,14 +1,16 @@
 import { RpcRequest, RpcResponse } from "../types"
 import { chainManager } from "../chains/manager"
 import { RpcRouter } from "./rpc.router"
+import { log } from "../utils/logger"
 
 export class RpcService {
   private router: RpcRouter
 
   constructor() {
-    console.log("RPC Service initialized")
+    log.tagged("RPC", "Service initialized")
     const chains = chainManager.getAllChains()
-    console.log(`Registered chains: ${chains.map((c) => `${c.name} (${c.chainId})`).join(", ")}`)
+    const chainsList = chains.map((c) => `${c.name} (${c.chainId})`).join(", ")
+    log.info(`Registered chains: ${chainsList}`)
     this.router = new RpcRouter()
   }
 

@@ -1,6 +1,7 @@
 import { WebSocket, WebSocketServer as WSServer } from "ws"
 import { RpcService } from "../services/rpc"
 import { RpcRequest, RpcResponse } from "../types"
+import { log } from "../utils/logger"
 
 export class WebSocketServer {
   private wss: WSServer
@@ -16,13 +17,13 @@ export class WebSocketServer {
     })
 
     this.wss.on("error", (error) => {
-      console.error("WebSocket server error:", error)
+      log.error("WebSocket server error:", error)
     })
   }
 
   private handleConnection(ws: WebSocket) {
     const clientId = this.generateClientId()
-    console.log(`Client connected: ${clientId}`)
+    log.success(`Client connected: ${clientId}`)
     this.clients.add(ws)
 
     // Send welcome message
@@ -43,29 +44,24 @@ export class WebSocketServer {
           return
         }
 
-        console.log(`[${clientId}] Request: ${message.method}`)
+        log.debug(`[${clientId}] Request: ${message.method}`)
 
         const response = await this.rpcService.handleRequest(message)
         this.send(ws, response)
-      } catch (error: any) {
-        console.error("Error handling message:", error)
-        this.sendError(
-          ws,
-          "unknown",
-          -32700,
-          "Parse error",
-          error.message
-        )
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        log.error(`Error handling message: ${errorMessage}`)
+        this.sendError(ws, "unknown", -32700, "Parse error", error.message)
       }
     })
 
     ws.on("close", () => {
-      console.log(`Client disconnected: ${clientId}`)
+      log.info(`Client disconnected: ${clientId}`)
       this.clients.delete(ws)
     })
 
     ws.on("error", (error) => {
-      console.error(`Client error [${clientId}]:`, error)
+      log.error(`Client error [${clientId}]:`, error)
       this.clients.delete(ws)
     })
   }
@@ -76,13 +72,7 @@ export class WebSocketServer {
     }
   }
 
-  private sendError(
-    ws: WebSocket,
-    id: string,
-    code: number,
-    message: string,
-    data?: any
-  ) {
+  private sendError(ws: WebSocket, id: string, code: number, message: string, data?: any) {
     this.send(ws, {
       id,
       error: {
@@ -98,7 +88,7 @@ export class WebSocketServer {
   }
 
   close() {
-    console.log("Closing WebSocket server...")
+    log.info("Closing WebSocket server...")
     this.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.close()
@@ -107,4 +97,3 @@ export class WebSocketServer {
     this.wss.close()
   }
 }
-
