@@ -20,6 +20,8 @@ export interface Contract {
   network: string
   sierra_json?: JsonValue
   casm_json?: JsonValue
+  contract_class_json?: JsonValue
+  compiled_contract_class_json?: JsonValue
   class_hash?: string
   compiled_class_hash?: string
   status: ContractStatus
@@ -49,6 +51,8 @@ export interface CreateContractInput {
   network?: string
   sierra_json?: JsonValue
   casm_json?: JsonValue
+  contract_class_json?: JsonValue
+  compiled_contract_class_json?: JsonValue
   owner_address?: string
 }
 
@@ -58,6 +62,8 @@ export interface UpdateContractInput {
   description?: string
   sierra_json?: JsonValue
   casm_json?: JsonValue
+  contract_class_json?: JsonValue
+  compiled_contract_class_json?: JsonValue
   class_hash?: string
   compiled_class_hash?: string
   status?: ContractStatus
@@ -125,6 +131,8 @@ export async function createContract(input: CreateContractInput): Promise<Contra
       network: input.network || "sepolia",
       sierra_json: input.sierra_json,
       casm_json: input.casm_json,
+      contract_class_json: input.contract_class_json,
+      compiled_contract_class_json: input.compiled_contract_class_json,
       owner_address: input.owner_address,
     },
   })
@@ -143,6 +151,12 @@ export async function updateContract(
       ...(input.description !== undefined && { description: input.description }),
       ...(input.sierra_json !== undefined && { sierra_json: input.sierra_json }),
       ...(input.casm_json !== undefined && { casm_json: input.casm_json }),
+      ...(input.contract_class_json !== undefined && {
+        contract_class_json: input.contract_class_json,
+      }),
+      ...(input.compiled_contract_class_json !== undefined && {
+        compiled_contract_class_json: input.compiled_contract_class_json,
+      }),
       ...(input.class_hash !== undefined && { class_hash: input.class_hash }),
       ...(input.compiled_class_hash !== undefined && {
         compiled_class_hash: input.compiled_class_hash,
@@ -304,6 +318,8 @@ function mapContractFromPrisma(contract: {
   network: string
   sierra_json: JsonValue
   casm_json: JsonValue
+  contract_class_json: JsonValue
+  compiled_contract_class_json: JsonValue
   class_hash: string | null
   compiled_class_hash: string | null
   status: string
@@ -319,6 +335,8 @@ function mapContractFromPrisma(contract: {
     network: contract.network,
     sierra_json: contract.sierra_json,
     casm_json: contract.casm_json,
+    contract_class_json: contract.contract_class_json,
+    compiled_contract_class_json: contract.compiled_contract_class_json,
     class_hash: contract.class_hash || undefined,
     compiled_class_hash: contract.compiled_class_hash || undefined,
     status: contract.status as ContractStatus,

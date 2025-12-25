@@ -24,6 +24,8 @@ export async function handleContractsCreate(request: RpcRequest): Promise<RpcRes
     network: request.params?.network,
     sierra_json: request.params?.sierraJson,
     casm_json: request.params?.casmJson,
+    contract_class_json: request.params?.contractClassJson,
+    compiled_contract_class_json: request.params?.compiledContractClassJson,
     owner_address: request.params?.ownerAddress,
   })
   return { id: request.id, result }
@@ -35,6 +37,8 @@ export async function handleContractsUpdate(request: RpcRequest): Promise<RpcRes
     description: request.params?.description,
     sierra_json: request.params?.sierraJson,
     casm_json: request.params?.casmJson,
+    contract_class_json: request.params?.contractClassJson,
+    compiled_contract_class_json: request.params?.compiledContractClassJson,
     class_hash: request.params?.classHash,
     compiled_class_hash: request.params?.compiledClassHash,
     status: request.params?.status,
