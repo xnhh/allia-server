@@ -2,10 +2,7 @@ import { RpcRequest, RpcResponse } from "../../types"
 import * as contractsDb from "../../db/starknet/contracts"
 
 export async function handleContractsList(request: RpcRequest): Promise<RpcResponse> {
-  const result = await contractsDb.getAllContractsWithInstances(
-    request.params?.ownerAddress,
-    request.params?.network
-  )
+  const result = await contractsDb.getAllContractsWithInstances(request.params?.network)
   return { id: request.id, result }
 }
 
@@ -26,7 +23,6 @@ export async function handleContractsCreate(request: RpcRequest): Promise<RpcRes
     casm_json: request.params?.casmJson,
     contract_class_json: request.params?.contractClassJson,
     compiled_contract_class_json: request.params?.compiledContractClassJson,
-    owner_address: request.params?.ownerAddress,
   })
   return { id: request.id, result }
 }

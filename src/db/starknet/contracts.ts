@@ -25,7 +25,6 @@ export interface Contract {
   class_hash?: string
   compiled_class_hash?: string
   status: ContractStatus
-  owner_address?: string
   declare_tx_hash?: string
   created_at: Date
   updated_at: Date
@@ -53,7 +52,6 @@ export interface CreateContractInput {
   casm_json?: JsonValue
   contract_class_json?: JsonValue
   compiled_contract_class_json?: JsonValue
-  owner_address?: string
 }
 
 // 更新合约输入
@@ -90,13 +88,9 @@ export interface ContractWithInstances extends Contract {
 // 合约 CRUD 操作（使用 Prisma）
 // ============================================================================
 
-export async function getAllContracts(
-  ownerAddress?: string,
-  network?: string
-): Promise<Contract[]> {
+export async function getAllContracts(network?: string): Promise<Contract[]> {
   const contracts = await prisma.contract.findMany({
     where: {
-      ...(ownerAddress && { owner_address: ownerAddress }),
       ...(network && { network }),
     },
     orderBy: {
@@ -129,11 +123,10 @@ export async function createContract(input: CreateContractInput): Promise<Contra
       name: input.name,
       description: input.description,
       network: input.network || "sepolia",
-      sierra_json: input.sierra_json,
-      casm_json: input.casm_json,
-      contract_class_json: input.contract_class_json,
-      compiled_contract_class_json: input.compiled_contract_class_json,
-      owner_address: input.owner_address,
+      sierra_json: jsonValueToString(input.sierra_json),
+      casm_json: jsonValueToString(input.casm_json),
+      contract_class_json: jsonValueToString(input.contract_class_json),
+      compiled_contract_class_json: jsonValueToString(input.compiled_contract_class_json),
     },
   })
 
@@ -149,13 +142,13 @@ export async function updateContract(
     data: {
       ...(input.name !== undefined && { name: input.name }),
       ...(input.description !== undefined && { description: input.description }),
-      ...(input.sierra_json !== undefined && { sierra_json: input.sierra_json }),
-      ...(input.casm_json !== undefined && { casm_json: input.casm_json }),
+      ...(input.sierra_json !== undefined && { sierra_json: jsonValueToString(input.sierra_json) }),
+      ...(input.casm_json !== undefined && { casm_json: jsonValueToString(input.casm_json) }),
       ...(input.contract_class_json !== undefined && {
-        contract_class_json: input.contract_class_json,
+        contract_class_json: jsonValueToString(input.contract_class_json),
       }),
       ...(input.compiled_contract_class_json !== undefined && {
-        compiled_contract_class_json: input.compiled_contract_class_json,
+        compiled_contract_class_json: jsonValueToString(input.compiled_contract_class_json),
       }),
       ...(input.class_hash !== undefined && { class_hash: input.class_hash }),
       ...(input.compiled_class_hash !== undefined && {
@@ -281,12 +274,10 @@ export async function getContractWithInstances(id: string): Promise<ContractWith
 }
 
 export async function getAllContractsWithInstances(
-  ownerAddress?: string,
   network?: string
 ): Promise<ContractWithInstances[]> {
   const contracts = await prisma.contract.findMany({
     where: {
-      ...(ownerAddress && { owner_address: ownerAddress }),
       ...(network && { network }),
     },
     include: {
@@ -311,36 +302,92 @@ export async function getAllContractsWithInstances(
 // 类型映射辅助函数
 // ============================================================================
 
+// 将 JSON 值转换为字符串（如果是对象则序列化，如果是字符串则保持原样）
+// 注意：如果传入的是字符串，直接返回，保持原始 key 顺序
+// 如果传入的是对象，需要序列化（但会丢失原始顺序，所以应该传入原始字符串）
+function jsonValueToString(value: JsonValue | string | null | undefined): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+  if (typeof value === "string") {
+    // 如果是字符串，直接返回，不进行任何处理，保持原始顺序
+    // 通过 websocket 传输时，字符串可能被转义，需要检查
+    // 如果字符串看起来像是被 JSON.stringify 转义过的 JSON（以 \" 开头和结尾），需要解析
+    const trimmed = value.trim()
+    if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length > 2) {
+      try {
+        // 可能是被转义的 JSON 字符串，解析后得到原始字符串
+        const unescaped = JSON.parse(value)
+        if (typeof unescaped === "string") {
+          return unescaped
+        }
+      } catch {
+        // 解析失败，说明就是原始字符串
+      }
+    }
+    return value
+  }
+  // 如果是对象，序列化为字符串（这种情况应该避免，尽量传入原始字符串）
+  return JSON.stringify(value)
+}
+
+// 将字符串解析为 JSON 值（如果需要的话）
+function stringToJsonValue(value: string | null | undefined): JsonValue | undefined {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
+}
+
 function mapContractFromPrisma(contract: {
   id: string
   name: string
   description: string | null
   network: string
-  sierra_json: JsonValue
-  casm_json: JsonValue
-  contract_class_json: JsonValue
-  compiled_contract_class_json: JsonValue
+  sierra_json: string | null | JsonValue
+  casm_json: string | null | JsonValue
+  contract_class_json: string | null | JsonValue
+  compiled_contract_class_json: string | null | JsonValue
   class_hash: string | null
   compiled_class_hash: string | null
   status: string
-  owner_address: string | null
   declare_tx_hash: string | null
   created_at: Date
   updated_at: Date
 }): Contract {
+  // Convert JSON fields from string to JsonValue if needed
+  const sierraJson =
+    typeof contract.sierra_json === "string"
+      ? contract.sierra_json
+      : (contract.sierra_json as string | null)
+  const casmJson =
+    typeof contract.casm_json === "string"
+      ? contract.casm_json
+      : (contract.casm_json as string | null)
+  const contractClassJson =
+    typeof contract.contract_class_json === "string"
+      ? contract.contract_class_json
+      : (contract.contract_class_json as string | null)
+  const compiledContractClassJson =
+    typeof contract.compiled_contract_class_json === "string"
+      ? contract.compiled_contract_class_json
+      : (contract.compiled_contract_class_json as string | null)
   return {
     id: contract.id,
     name: contract.name,
     description: contract.description || undefined,
     network: contract.network,
-    sierra_json: contract.sierra_json,
-    casm_json: contract.casm_json,
-    contract_class_json: contract.contract_class_json,
-    compiled_contract_class_json: contract.compiled_contract_class_json,
+    sierra_json: stringToJsonValue(sierraJson),
+    casm_json: stringToJsonValue(casmJson),
+    contract_class_json: stringToJsonValue(contractClassJson),
+    compiled_contract_class_json: stringToJsonValue(compiledContractClassJson),
     class_hash: contract.class_hash || undefined,
     compiled_class_hash: contract.compiled_class_hash || undefined,
     status: contract.status as ContractStatus,
-    owner_address: contract.owner_address || undefined,
     declare_tx_hash: contract.declare_tx_hash || undefined,
     created_at: contract.created_at,
     updated_at: contract.updated_at,

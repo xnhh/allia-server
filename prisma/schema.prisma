@@ -16,14 +16,13 @@ model Contract {
   name                String   @db.VarChar(255)
   description         String?  @db.Text
   network             String   @default("sepolia") @db.VarChar(50)
-  sierra_json                 Json?
-  casm_json                   Json?
-  contract_class_json         Json?
-  compiled_contract_class_json Json?
+  sierra_json                 String?  @db.Text
+  casm_json                   String?  @db.Text
+  contract_class_json         String?  @db.Text
+  compiled_contract_class_json String? @db.Text
   class_hash                  String?  @db.VarChar(66)
   compiled_class_hash         String?  @db.VarChar(66)
   status                      String   @default("draft") @db.VarChar(50)
-  owner_address       String?  @db.VarChar(66)
   declare_tx_hash     String?  @db.VarChar(66)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
@@ -33,7 +32,6 @@ model Contract {
 
   @@index([status])
   @@index([network])
-  @@index([owner_address])
   @@index([class_hash])
   @@map("contracts")
 }
